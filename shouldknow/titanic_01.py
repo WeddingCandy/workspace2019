@@ -20,4 +20,12 @@ warnings.filterwarnings('ignore')
 from sklearn.ensemble import (RandomForestClassifier, AdaBoostClassifier,
                               GradientBoostingClassifier, ExtraTreesClassifier)
 from sklearn.svm import SVC
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
+
+train_df = pd.read_csv(r'../shouldknow/data/train.csv')
+test_df = pd.read_csv(r'../shouldknow/data/test.csv')
+combine = [train_df, test_df]
+
+print(train_df.columns.values)
+
+
