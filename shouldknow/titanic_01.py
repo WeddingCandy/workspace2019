@@ -18,9 +18,13 @@ warnings.filterwarnings('ignore')
 
 # Going to use these 5 base models for the stacking
 from sklearn.ensemble import (RandomForestClassifier, AdaBoostClassifier,
-                              GradientBoostingClassifier, ExtraTreesClassifier)
+                              GradientBoostingClassifier, ExtraTreesClassifier )
+from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.svm import SVC
-from sklearn.model_selection import KFold
+from sklearn.model_selection import (KFold )
+# Some split methods to use
+from sklearn.model_selection import  cross_validate
+
 
 train_df = pd.read_csv(r'../shouldknow/data/train.csv')
 test_df = pd.read_csv(r'../shouldknow/data/test.csv')
@@ -53,13 +57,13 @@ grid.map(sns.barplot, 'Sex', 'Fare', alpha=.5, ci=None)
 grid.add_legend()
 
 # plt.show()
-print("Before", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
+# print("Before", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
 
 train_df = train_df.drop(['Ticket', 'Cabin'], axis=1)
 test_df = test_df.drop(['Ticket', 'Cabin'], axis=1)
 combine = [train_df, test_df]
 
-print("After", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
+# print("After", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
 
 for dataset in combine:
     dataset['Title'] = dataset.Name.str.extract(' ([A-Za-z]+)\.', expand=False)
@@ -118,7 +122,7 @@ for dataset in combine:
 
 
 train_df['AgeBand'] = pd.cut(train_df['Age'], 5)
-train_df[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().sort_values(by='AgeBand', ascending=True)
+# train_df[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().sort_values(by='AgeBand', ascending=True)
 
 for dataset in combine:
     dataset.loc[ dataset['Age'] <= 16, 'Age'] = 0
@@ -134,13 +138,13 @@ combine = [train_df, test_df]
 for dataset in combine:
     dataset['FamilySize'] = dataset['SibSp'] + dataset['Parch'] + 1
 
-train_df[['FamilySize', 'Survived']].groupby(['FamilySize'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+# train_df[['FamilySize', 'Survived']].groupby(['FamilySize'], as_index=False).mean().sort_values(by='Survived', ascending=False)
 
 for dataset in combine:
     dataset['IsAlone'] = 0
     dataset.loc[dataset['FamilySize'] == 1, 'IsAlone'] = 1
 
-train_df[['IsAlone', 'Survived']].groupby(['IsAlone'], as_index=False).mean()
+# train_df[['IsAlone', 'Survived']].groupby(['IsAlone'], as_index=False).mean()
 
 train_df = train_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)
 test_df = test_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)
@@ -149,8 +153,57 @@ combine = [train_df, test_df]
 for dataset in combine:
     dataset['Age*Class'] = dataset.Age * dataset.Pclass
 
-train_df.loc[:, ['Age*Class', 'Age', 'Pclass']].head(10)
 
-train_df.head(5)
+freq_port = train_df.Embarked.dropna().mode()[0]
+for dataset in combine:
+    dataset['Embarked'] = dataset['Embarked'].fillna(freq_port)
+
+train_df[['Embarked', 'Survived']].groupby(['Embarked'], as_index=False).mean().sort_values(by='Survived',
+                                                                                 ascending=False)
+
+for dataset in combine:
+    dataset['Embarked'] = dataset['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2} ).astype(int)
+
+test_df['Fare'].fillna(test_df['Fare'].dropna().median(), inplace=True)
+
+train_df['FareBand'] = pd.qcut(train_df['Fare'], 4)   # quarter cut
+# train_df[['FareBand', 'Survived']].groupby(['FareBand'], as_index=False).mean().sort_values(by='FareBand', ascending=True)
+
+
+for dataset in combine:
+    dataset.loc[ dataset['Fare'] <= 7.91, 'Fare'] = 0
+    dataset.loc[(dataset['Fare'] > 7.91) & (dataset['Fare'] <= 14.454), 'Fare'] = 1
+    dataset.loc[(dataset['Fare'] > 14.454) & (dataset['Fare'] <= 31), 'Fare']   = 2
+    dataset.loc[ dataset['Fare'] > 31, 'Fare'] = 3
+    dataset['Fare'] = dataset['Fare'].astype(int)
+
+train_df = train_df.drop(['FareBand'], axis=1)
+combine = [train_df, test_df]
+
+
+"""
+It's part of Model construction
+
+"""
+
+
+X_train = train_df.drop("Survived", axis=1)
+Y_train = train_df["Survived"]
+X_test  = test_df.drop("PassengerId", axis=1).copy()
+
+# Logistic Regression
+
+logreg = LogisticRegression()
+logreg.fit(X_train, Y_train)
+Y_pred = logreg.predict(X_test)
+acc_log = round(logreg.score(X_train, Y_train) * 100, 2)
+print(acc_log)
+
+coeff_df = pd.DataFrame(train_df.columns.delete(0))
+coeff_df.columns = ['Feature']
+coeff_df["Correlation"] = pd.Series(logreg.coef_[0])   # Each  logistic reg has a coef result and use this way could get values .
+
+
+print(coeff_df.sort_values(by='Correlation', ascending=False))
 
 print('finished')
