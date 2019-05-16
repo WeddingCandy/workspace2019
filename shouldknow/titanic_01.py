@@ -17,11 +17,14 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Going to use these 5 base models for the stacking
-from sklearn.ensemble import (RandomForestClassifier, AdaBoostClassifier,
-                              GradientBoostingClassifier, ExtraTreesClassifier )
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier,ExtraTreesClassifier
 from sklearn.linear_model.logistic import LogisticRegression
-from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC , LinearSVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import  Perceptron
 from sklearn.model_selection import (KFold )
+
 # Some split methods to use
 from sklearn.model_selection import  cross_validate
 
@@ -195,15 +198,46 @@ X_test  = test_df.drop("PassengerId", axis=1).copy()
 
 logreg = LogisticRegression()
 logreg.fit(X_train, Y_train)
-Y_pred = logreg.predict(X_test)
+Y_pred1 = logreg.predict(X_test)
 acc_log = round(logreg.score(X_train, Y_train) * 100, 2)
-print(acc_log)
+print('acc_log:' , acc_log)
 
 coeff_df = pd.DataFrame(train_df.columns.delete(0))
 coeff_df.columns = ['Feature']
 coeff_df["Correlation"] = pd.Series(logreg.coef_[0])   # Each  logistic reg has a coef result and use this way could get values .
 
+# print(coeff_df.sort_values(by='Correlation', ascending=False))
 
-print(coeff_df.sort_values(by='Correlation', ascending=False))
+svc = SVC()
+svc.fit(X_train, Y_train)
+Y_pred2 = svc.predict(X_test)
+acc_svc = round(svc.score(X_train, Y_train) * 100, 2)
+print('acc_svc:',acc_svc )
+
+knn = KNeighborsClassifier(n_neighbors = 3)
+knn.fit(X_train, Y_train)
+Y_pred3 = knn.predict(X_test)
+acc_knn = round(knn.score(X_train, Y_train) * 100, 2)
+print('acc_knn:' ,acc_knn)
+
+gaussian = GaussianNB()
+gaussian.fit(X_train, Y_train)
+Y_pred4 = gaussian.predict(X_test)
+acc_gaussian = round(gaussian.score(X_train, Y_train) * 100, 2)
+print('acc_gaussian:' , acc_gaussian)
+
+
+perceptron = Perceptron()
+perceptron.fit(X_train, Y_train)
+Y_pred5 = perceptron.predict(X_test)
+acc_perceptron = round(perceptron.score(X_train, Y_train) * 100, 2)
+print('acc_perceptron:',acc_perceptron)
+
+linear_svc = LinearSVC()
+linear_svc.fit(X_train, Y_train)
+Y_pred6 = linear_svc.predict(X_test)
+acc_linear_svc = round(linear_svc.score(X_train, Y_train) * 100, 2)
+print('acc_linear_svc:',acc_linear_svc)
+
 
 print('finished')
