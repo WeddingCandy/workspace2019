@@ -22,7 +22,8 @@ from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC , LinearSVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import  Perceptron
+from sklearn.linear_model import  Perceptron ,SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import (KFold )
 
 # Some split methods to use
@@ -239,5 +240,40 @@ Y_pred6 = linear_svc.predict(X_test)
 acc_linear_svc = round(linear_svc.score(X_train, Y_train) * 100, 2)
 print('acc_linear_svc:',acc_linear_svc)
 
+sgd = SGDClassifier()
+sgd.fit(X_train, Y_train)
+Y_pred7 = sgd.predict(X_test)
+acc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)
+print('acc_sgd:' , acc_sgd)
+
+decision_tree = DecisionTreeClassifier()
+decision_tree.fit(X_train, Y_train)
+Y_pred8 = decision_tree.predict(X_test)
+acc_decision_tree = round(decision_tree.score(X_train, Y_train) * 100, 2)
+print('acc_decision_tree:',acc_decision_tree)
+
+random_forest = RandomForestClassifier(n_estimators=100)
+random_forest.fit(X_train, Y_train)
+Y_pred9 = random_forest.predict(X_test)
+random_forest.score(X_train, Y_train)
+acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
+print('acc_random_forest:',acc_random_forest)
+
+models = pd.DataFrame({
+    'Model': ['Support Vector Machines', 'KNN', 'Logistic Regression',
+              'Random Forest', 'Naive Bayes', 'Perceptron',
+              'Stochastic Gradient Decent', 'Linear SVC',
+              'Decision Tree'],
+    'Score': [acc_svc, acc_knn, acc_log,
+              acc_random_forest, acc_gaussian, acc_perceptron,
+              acc_sgd, acc_linear_svc,
+              acc_decision_tree]})
+print(models.sort_values(by='Score', ascending=False))
+submission = pd.DataFrame({
+        "PassengerId": test_df["PassengerId"],
+        "Survived": Y_pred9
+    })
+
+submission.to_csv(r'../shouldknow/data/submission.csv', index=False)
 
 print('finished')
