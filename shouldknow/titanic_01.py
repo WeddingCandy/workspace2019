@@ -259,6 +259,30 @@ random_forest.score(X_train, Y_train)
 acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
 print('acc_random_forest:',acc_random_forest)
 
+adaboost_classifier = AdaBoostClassifier()
+adaboost_classifier.fit(X_train, Y_train)
+Y_pred10 = adaboost_classifier.predict(X_test)
+adaboost_classifier.score(X_train, Y_train)
+acc_adaboost_classifier = round(adaboost_classifier.score(X_train, Y_train) * 100, 2)
+print('acc_adaboost_classifier:',acc_adaboost_classifier)
+
+
+gboost_classifier = GradientBoostingClassifier()
+gboost_classifier.fit(X_train, Y_train)
+Y_pred11 = gboost_classifier.predict(X_test)
+gboost_classifier.score(X_train, Y_train)
+acc_gboost_classifier = round(gboost_classifier.score(X_train, Y_train) * 100, 2)
+print('acc_adaboost_classifier:',acc_gboost_classifier)
+
+
+extratrees_classifier = ExtraTreesClassifier()
+extratrees_classifier.fit(X_train, Y_train)
+Y_pred12 = extratrees_classifier.predict(X_test)
+extratrees_classifier.score(X_train, Y_train)
+acc_extratrees_classifier = round(extratrees_classifier.score(X_train, Y_train) * 100, 2)
+print('acc_extratrees_classifier:',acc_extratrees_classifier)
+
+
 models = pd.DataFrame({
     'Model': ['Support Vector Machines', 'KNN', 'Logistic Regression',
               'Random Forest', 'Naive Bayes', 'Perceptron',
