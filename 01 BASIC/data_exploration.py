@@ -169,3 +169,4 @@ plt.scatter(df_train[df_train['TotalBsmtSF']>0]['TotalBsmtSF'], df_train[df_trai
 #convert categorical variable into dummy
 df_train = pd.get_dummies(df_train)
 
+
