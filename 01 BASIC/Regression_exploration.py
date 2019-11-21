@@ -9,7 +9,7 @@ from scipy.stats import skew
 from IPython.display import display
 import matplotlib.pyplot as plt
 import seaborn as sns
-import Featuretools as ftl
+import featuretools as ft
 
 # Definitions
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
@@ -323,7 +323,7 @@ train_cat = train[categorical_features]
 
 # Handle remaining missing values for numerical features by using median as replacement
 print("NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
-train_num = train_num.fillna(train_num.median())
+train_num = train_num.fillna(train_num.median())   # It's quite common
 print("Remaining NAs for numerical features in train : " + str(train_num.isnull().values.sum()))
 
 
@@ -340,3 +340,59 @@ train_num[skewed_features] = np.log1p(train_num[skewed_features])
 print("NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
 train_cat = pd.get_dummies(train_cat)
 print("Remaining NAs for categorical features in train : " + str(train_cat.isnull().values.sum()))
+
+# Modeling
+
+# Join categorical and numerical features
+train = pd.concat([train_num, train_cat], axis = 1)
+print("New number of features : " + str(train.shape[1] + len(train.index) ) )
+
+
+id_cols = pd.DataFrame(data =np.array(train.index) ,columns = ['ids'] ,dtype = np.str)
+
+
+train_copied = train
+# train_copied = pd.concat([id_cols , train_copied] , axis = 1)
+
+es = ft.EntitySet(id = 'trainning')
+es = es.entity_from_dataframe(entity_id = 'train_data', dataframe = train_copied  ,index = 'id_cols' )   # index = 'id_cols'
+
+# print(es['train_data'].variables)
+
+
+'''
+new_relationship = ft.Relationship(es["products"]["product_id"],es["transactions"]["product_id"])
+es = es.add_relationship(new_relationship)
+'''
+
+es = es.normalize_entity(base_entity_id="transactions",new_entity_id="sessions",index="session_id",
+                         make_time_index="session_start",
+                         additional_variables=["device", "customer_id", "zip_code", "session_start", "join_date"])
+
+
+
+# Partition the dataset in train + validation sets
+X_train, X_test, y_train, y_test = train_test_split(train, y, test_size = 0.3, random_state = 0)
+print("X_train : " + str(X_train.shape))
+print("X_test : " + str(X_test.shape))
+print("y_train : " + str(y_train.shape))
+print("y_test : " + str(y_test.shape))
+
+# Standardize numerical features
+stdSc = StandardScaler()
+X_train.loc[:, numerical_features] = stdSc.fit_transform(X_train.loc[:, numerical_features])
+X_test.loc[:, numerical_features] = stdSc.transform(X_test.loc[:, numerical_features])
+
+
+# Define error measure for official scoring : RMSE
+scorer = make_scorer(mean_squared_error, greater_is_better = False)
+
+def rmse_cv_train(model):
+    rmse= np.sqrt(-cross_val_score(model, X_train, y_train, scoring = scorer, cv = 10))
+    return(rmse)
+
+def rmse_cv_test(model):
+    rmse= np.sqrt(-cross_val_score(model, X_test, y_test, scoring = scorer, cv = 10))
+    return(rmse)
+
+
