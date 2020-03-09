@@ -365,10 +365,11 @@ new_relationship = ft.Relationship(es["products"]["product_id"],es["transactions
 es = es.add_relationship(new_relationship)
 '''
 
-es = es.normalize_entity(base_entity_id="transactions",new_entity_id="sessions",index="session_id",
-                         make_time_index="session_start",
-                         additional_variables=["device", "customer_id", "zip_code", "session_start", "join_date"])
 
+# this step is to create new entity from existing entity and the sample is normalization .
+es = es.normalize_entity(base_entity_id="train_data" ,new_entity_id="sessions",index="id_cols")
+
+feature_matrix, feature_defs = ft.dfs(entityset= es,  target_entity="trainning" )
 
 
 # Partition the dataset in train + validation sets
